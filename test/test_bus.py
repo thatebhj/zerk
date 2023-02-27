@@ -4,11 +4,11 @@
 import unittest
 
 
-from zerk.handler import Handler
+from zerk.command import CLI
 from zerk.listens import Listens
 
 
-class Client(Handler):
+class Client(CLI):
 
     gotcha = False
 
@@ -17,6 +17,7 @@ class Client(Handler):
 
     def raw(self, txt):
         Client.gotcha = True
+
 
 class TestListens(unittest.TestCase):
 

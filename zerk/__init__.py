@@ -9,7 +9,8 @@ from . import decoder, default, encoder, objects
 
 from .decoder import load, loads
 from .encoder import dump, dumps
-from .objects import *
+from .objects import Object, format, items, keys, kind, name, oid
+from .objects import search, update, values
 
 
 def __dir__():

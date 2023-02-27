@@ -9,10 +9,15 @@ import _thread
 import zerk.objects
 
 
-from zerk.objects import *
+from zerk.decoder import *
+from zerk.default import *
+from zerk.encoder import *
+from zerk.objects import Object, format, items, keys, kind, name, oid
+from zerk.objects import search, update, values
 from zerk.handler import *
-from zerk.storage import *
+from zerk.storage import Storage, find, fns, hook, last, save
 from zerk.threads import *
+from zerk.utility import cdir, fntime
 
 
 Storage.workdir = ".test"
@@ -26,35 +31,18 @@ testlock = _thread.allocate_lock()
 
 
 attrs1 = (
-            'Class',
-            'Db',
-            'Default',
-            'Object',
-            'ObjectDecoder',
-            'ObjectEncoder',
-            'Wd',
-            'cdir',
-            'dump',
-            'dumps',
-            'edit',
-            'find',
-            'fns',
-            'fntime',
-            'hook',
-            'items',
-            'keys',
-            'kind',
-            'last',
-            'load',
-            'loads',
-            'match',
-            'name',
-            'printable',
-            'register',
-            'save',
-            'update',
-            'values',
-     )
+          'Object',
+          'format',
+          'items',
+          'keys',
+          'kind',
+          'name',
+          'oid',
+          'search',
+          'update',
+          'values'
+         ) 
+
 
 attrs2 = (
           '__class__',
@@ -94,19 +82,15 @@ attrs2 = (
 
 class TestObject(unittest.TestCase):
 
-    #def setUp(self):
-    #    obj = Object()
-    #    save(obj)
-
-    def test_match(self):
-        mtc = match("zerk.objects.Object", {"txt": "test"})
-        self.assertTrue(not mtc)
+    def setUp(self):
+        obj = Object()
+        save(obj)
 
     def test_find(self):
         objs = find("object")
         if objs:
             self.assertTrue("zerk.objects.Object" in repr(objs[0]))
-        self.assertTrue(True)
+        self.assertTrue(objs)
 
     def test_default(self):
         dft = Default()
@@ -217,12 +201,12 @@ class TestObject(unittest.TestCase):
     def test_edit(self):
         obj = Object()
         dta = {"key": "value"}
-        edit(obj, dta)
+        update(obj, dta)
         self.assertEqual(obj.key, "value")
 
     def test_printable(self):
         obj = Object()
-        self.assertEqual(printable(obj, keys(obj)), "")
+        self.assertEqual(format(obj, keys(obj)), "")
 
     def test_get(self):
         obj = Object()
@@ -276,7 +260,7 @@ class TestObject(unittest.TestCase):
     def test_save(self):
         obj = Object()
         path = save(obj)
-        self.assertTrue(os.path.exists(os.path.join(Wd.workdir, "store", path)))
+        self.assertTrue(os.path.exists(os.path.join(Storage.workdir, "store", path)))
 
     def test_update(self):
         obj = Object()
@@ -306,9 +290,7 @@ class TestDb(unittest.TestCase):
         obj = Object()
         save(obj)
         fnms = fns("zerk.objects.Object")
-        if fnms:
-            self.assertTrue("zerk.objects.Object"  in fnms[0])
-        self.assertTrue(True)
+        self.assertTrue("zerk.objects.Object"  in fnms[0])
 
     def test_hook(self):
         obj = Object()
