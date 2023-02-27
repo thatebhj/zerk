@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+
+"lint"
+
+
+import os
+import sys
+
+
+SKIP = ["---", "Your code"]
+IGNORE = "C,R,E0402,E0401,E1101,W0201,W0703,W0613,W0108,W0406,W0212,W0622,E0611,W0611"
+
+
+def doskip(txt):
+    if not txt.strip():
+        return True
+    for skp in SKIP:
+        if skp in txt:
+            return True
+    return False
+
+
+def loop(path, txt):
+    old = os.getcwd()
+    os.chdir(path)
+    for fnn in os.listdir(path):
+        if fnn.startswith("."):
+            continue
+        #if not os.path.exists("%s/__init__.py" % fnn):
+        #    continue
+        old = os.getcwd()
+        fpath = os.path.abspath(os.path.join(path, fnn))
+        if os.path.isdir(fpath):
+            loop(fpath, txt)
+        if not os.path.isdir(fpath):
+            continue
+        os.chdir(fpath)
+        for fnm in os.listdir(fpath):
+            print(f"{fpath}/{fnm}") 
+            sys.stdout.flush()
+            popen(txt + " " + fnm)
+        os.chdir(old)
+        #os.chdir("..")
+    os.chdir(old)
+
+
+def popen(txt):
+    for line in os.popen(txt).readlines():
+        if doskip(line):
+            continue
+        print(line.strip())
+        sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    popen("din/wipe")
+    loop(os.getcwd(), "pylint -v -d %s " % IGNORE)

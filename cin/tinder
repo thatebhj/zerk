@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+
+"tinder"
+
+
+import os
+import random
+import shutil
+import sys
+import termios
+import time
+import traceback
+import _thread
+
+
+sys.path.insert(0, os.getcwd())
+
+
+from opq.default import Default
+from opq.message import Message
+from opq.objects import Object, format, update
+from opq.handler import Handler
+from opq.modules import cmd, flt, fnd, irc, log, rss, tdo, thr
+from opq.storage import Storage
+from opq.threads import launch
+from opq.utility import consume, elapsed, locked, include, spl, wait
+
+
+paylock = _thread.allocate_lock()
+
+
+Cfg = Default()
+
+
+Cfg.debug = True
+Cfg.name = "tinder"
+
+
+Storage.workdir = ".test"
+
+
+errors = []
+events = []
+results = []
+
+
+SKIP = ["debug",]
+
+
+param = Object()
+param.add = ["test@shell", "bart", ""]
+param.cfg = ["server=localhost", ""]
+param.dne = ["test4", ""]
+param.rem = ["reddit", ""]
+param.dpl = ["reddit title,summary,link", ""]
+param.flt = ["0", ""]
+param.fnd = [
+             "cfg",
+             "tdo",
+             "rss",
+             "tdo txt==test",
+             "cfg server==localhost",
+             "rss rss==reddit"
+            ]
+param.log = ["test1", ""]
+param.nme = ["reddit reddit"]
+param.dpl = ["reddit title,link"]
+param.rem = ["reddit"]
+param.rss = ["https://www.reddit.com/r/python/.rss"]
+param.tdo = ["test4", ""]
+param.thr = [""]
+
+
+class CLI(Handler):
+
+    @staticmethod
+    def announce(txt):
+        CLI.raw(txt)
+
+    @staticmethod
+    def raw(txt):
+        if txt and "v" in Cfg.opts:
+            cprint(txt)
+
+
+def cprint(txt):
+    print(txt)
+    sys.stdout.flush()
+
+
+@locked(paylock)
+def payload(clt):
+    cmds = sorted(clt.cmds)
+    random.shuffle(cmds)
+    nmr = 0
+    for cmnd in cmds:
+        for ex in getattr(param, cmnd, [""]):
+            evt = Message()
+            evt.txt = cmnd + " " + ex
+            evt.orig = repr(clt)
+            clt.dispatch(evt)
+            events.append(evt)
+            nmr += 1
+    return nmr
+
+
+def wrap(func):
+    fds = sys.stdin.fileno()
+    old = termios.tcgetattr(fds)
+    try:
+        func()
+    except (EOFError, KeyboardInterrupt):
+        cprint("")
+    finally:
+        termios.tcsetattr(fds, termios.TCSADRAIN, old)
+        for ex in Handler.errors:
+            traceback.print_exception(type(ex), ex, ex.__traceback__)
+
+
+def main():
+    date = time.ctime(time.time()).replace("  ", " ")
+    print(f"TINDER started {date}")
+    cfg = Message()
+    cfg.parse(" ".join(sys.argv[1:]))
+    update(Cfg, cfg)
+    if os.path.exists(Storage.workdir):
+        shutil.rmtree(Storage.workdir)
+    rss.debug = True
+    cli = CLI()
+    cli.scan(cmd)
+    cli.scan(flt)
+    cli.scan(fnd)
+    cli.scan(irc)
+    cli.scan(log)
+    cli.scan(rss)
+    cli.scan(tdo)
+    cli.scan(thr)
+    nrs = Cfg.index or 1
+    starttime = time.time()
+    waiters = []
+    res = 1
+    for _nr in range(nrs):
+        waiters.append(launch(payload, cli, name=_nr))
+    consume(events)
+    for wtr in waiters:
+        res += wtr.join() or 0
+    endtime = time.time()
+    print("%s %s %s (%s remaining)" %  (
+                                        elapsed(endtime - starttime),
+                                        res,
+                                        (endtime - starttime)/res, len(events))
+                                       )
+    print(format(Cfg))
+
+
+wrap(main)

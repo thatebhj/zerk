@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+
+import os
+import readline
+import sys
+import termios
+import time
+import traceback
+
+
+sys.path.insert(0, os.getcwd())
+
+
+from zerk.console import CLI
+from zerk.handler import command, parse_cli
+from zerk.modules import cmd, log, tdo
+from zerk.storage import Storage
+from zerk.utility import wrap
+
+
+Storage.workdir = os.path.expanduser("~/.zerk")
+
+
+def main():
+    evt = parse_cli(" ".join(sys.argv[1:]))
+    cli = CLI()
+    cli.scan(cmd)
+    cli.scan(log)
+    cli.scan(tdo)
+    return command(cli, evt.otxt)
+
+
+wrap(main)
