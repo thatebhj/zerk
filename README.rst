@@ -85,4 +85,4 @@ B.H.J. Thate <thatebhj@gmail.com>
 
 **COPYRIGHT**
 
-``CMDZ`` is placed in the Public Domain.
+``ZERK`` is placed in the Public Domain.

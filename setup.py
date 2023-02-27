@@ -29,7 +29,7 @@ def uploadlist(dir):
 
 setup(
     name="zerk",
-    version="1",
+    version="2",
     author="B.H.J. Thate",
     author_email="thatebhj@gmail.com",
     url="http://github.com/thatebhj/zerk",
@@ -39,6 +39,11 @@ setup(
     license="Public Domain",
     packages=["zerk", "zerk.modules"],
     scripts=["bin/zerk"],
+    include_package_data=True,
+    data_files=[
+                ("share/doc/zerk", uploadlist("zerk")),
+                ("share/doc/zerk", ("README.rst",))
+               ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: Public Domain",
