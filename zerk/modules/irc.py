@@ -16,12 +16,16 @@ import _thread
 from ..default import Default
 from ..objects import Object, format, keys, update
 from ..message import Message
-from ..utility import elapsed, fntime, locked
 from ..handler import Handler
 from ..threads import launch
 from ..storage import Storage
+from ..utility import elapsed, fntime, locked, wait
 
 
+import zerk.modules
+
+
+from .csl import Console
 from .opt import Output
 from .usr import Users
 
@@ -31,6 +35,7 @@ def __dir__():
             'Config',
             'IRC',
             'init',
+            'irc',
             'cfg',
             'pwd'
            )
@@ -55,17 +60,17 @@ class NoUser(Exception):
 
 class Config(Default):
 
-    channel = '#opq'
+    channel = '#zerk'
     control = '!'
-    nick = 'opq'
+    nick = 'zerk'
     password = ''
     port = 6667
-    realname = 'object programming quest'
+    realname = 'at any time'
     sasl = False
     server = 'localhost'
     servermodes = ''
     sleep = 60
-    username = 'opq'
+    username = 'zerk'
     users = False
 
     def __init__(self):
@@ -454,14 +459,19 @@ def cfg(event):
     Storage.last(config)
     if not event.sets:
         event.reply(format(
-                               config,
-                               keys(config),
-                               skip='control,password,realname,sleep,username')
-                              )
+                           config,
+                           keys(config),
+                           skip='control,password,realname,sleep,username')
+                          )
     else:
         update(config, event.sets)
         Storage.save(config)
         event.reply('ok')
+
+
+def irc(event):
+    bot = init()
+    bot.scandir(zerk.modules.__path__[0])
 
 
 def pwd(event):

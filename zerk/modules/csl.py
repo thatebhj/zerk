@@ -6,7 +6,7 @@ from zerk.message import Message
 from zerk.utility import wait
 
 
-from . import cmd, log, tdo
+import zerk.modules
 
 
 def __dir__():
@@ -34,8 +34,6 @@ class Console(CLI):
 
 def csl(event):
     console = Console()
-    console.scan(cmd)
-    console.scan(tdo)
-    console.scan(log)
+    console.scandir(zerk.modules.__path__[0])
     console.start()
     wait()

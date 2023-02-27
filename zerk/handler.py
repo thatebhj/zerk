@@ -2,7 +2,9 @@
 
 
 import inspect
+import os
 import queue
+import sys
 import threading
 import time
 import traceback
@@ -31,12 +33,13 @@ starttime = time.time()
 
 class Handler(Object):
 
+    cmds = Object()
     errors = []
 
     def __init__(self):
         Object.__init__(self)
         self.cbs = Object()
-        self.cmds = Object()
+        self.cmds = Handler.cmds or Object()
         self.queue = queue.Queue()
         self.stopped = threading.Event()
         self.register('command', self.dispatch)
@@ -50,16 +53,17 @@ class Handler(Object):
             event.parse(event.txt)
         if not event.orig:
             event.orig = repr(self)
-        func = getattr(self.cmds, event.cmd, None)
-        if func:
-            try:
-                func(event)
-            except Exception as ex:
-                exc = ex.with_traceback(ex.__traceback__)
-                Handler.errors.append(exc)
-                event.ready()
-                return
-            event.show()
+        for cmd in event.cmd.split(","):
+            func = getattr(self.cmds, event.cmd, None)
+            if func:
+                try:
+                    func(event)
+                except Exception as ex:
+                    exc = ex.with_traceback(ex.__traceback__)
+                    Handler.errors.append(exc)
+                    event.ready()
+                    return
+                event.show()
         event.ready()
 
     def handle(self, event):
@@ -95,6 +99,14 @@ class Handler(Object):
             names = cmd.__code__.co_varnames
             if 'event' in names:
                 register(self.cmds, key, cmd)
+
+    def scandir(self, path, mname="zerk.modules"):
+        for fnm in os.listdir(path):
+            if fnm.startswith("__"):
+                continue
+            name = "%s.%s" % (mname, fnm[:-3])
+            mod = sys.modules.get(name, None)
+            self.scan(mod)
 
     def stop(self):
         self.stopped.set()
